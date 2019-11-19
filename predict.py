@@ -7,6 +7,9 @@ from keras.layers import Dropout
 from keras.layers import LSTM
 from keras.callbacks import ModelCheckpoint
 from keras.utils import np_utils
+from keras.models import load_model
+import sys
+
 
 #Loading the data
 
@@ -33,19 +36,28 @@ num_patterns = len(dataX)
 
 
 X = numpy.reshape(dataX, (num_patterns, seq_length, 1))
-print(X[0].shape)
-# normalize
-X = X / float(num_vocab)
-# one hot encode the output variable
 y = np_utils.to_categorical(dataY)
 
-# Defining the Model Architecture
+print(X[0].shape)
 model = Sequential()
 model.add(LSTM(256, input_shape=(X.shape[1], X.shape[2])))
 model.add(Dropout(0.2))
 model.add(Dense(y.shape[1], activation='softmax'))
+model.load_weights('Trained_text_MOdel.h5')
 model.compile(loss='categorical_crossentropy', optimizer='adam')
 
-model.fit(X, y, epochs=5, batch_size=128)
+start = numpy.random.randint(0, len(dataX)-1)
+pattern = dataX[start]
 
-model.save_weights("Trained_text_MOdel.h5")
+# generate characters
+for i in range(1000):
+	x = numpy.reshape(pattern, (1, len(pattern), 1))
+	x = x / float(num_vocab)
+	prediction = model.predict(x, verbose=0)
+	index = numpy.argmax(prediction)
+	result = int_to_char[index]
+	seq_in = [int_to_char[value] for value in pattern]
+	sys.stdout.write(result)
+	pattern.append(index)
+	pattern = pattern[1:len(pattern)]
+#
